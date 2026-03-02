@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mannie Hammond | Software Engineer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="container">
+    <h1>James “Mannie” Hammond</h1>
+    <p class="subtitle">Software Engineer • Python • SQL • Desktop Apps</p>
+
+    <div class="links">
+      <a class="btn" href="https://github.com/SirMannie13" target="_blank" rel="noreferrer">GitHub</a>
+      <a class="btn" href="https://www.linkedin.com/in/YOUR-LINK" target="_blank" rel="noreferrer">LinkedIn</a>
+      <a class="btn" href="resume.pdf" target="_blank" rel="noreferrer">Resume</a>
+      <a class="btn" href="mailto:YOUR@email.com">Email</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section>
+      <h2>Projects</h2>
+      <div class="grid">
+
+        <article class="card">
+          <h3>Project Tracker</h3>
+          <p>R Shiny + Excel app to track and report project status.</p>
+          <p class="tech">Tech: R, Shiny, HTML, Excel</p>
+          <div class="card-links">
+            <a href="https://github.com/SirMannie13/Project_Tracker" target="_blank" rel="noreferrer">GitHub</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>Trip Planner</h3>
+          <p>Trip planning app with a landing page and supporting tools.</p>
+          <p class="tech">Tech: (fill in)</p>
+          <div class="card-links">
+            <a href="https://github.com/SirMannie13/trip_planner" target="_blank" rel="noreferrer">GitHub</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>Patron Monitor (Internal / Proprietary)</h3>
+          <p>Desktop monitoring tool. Code private; screenshots/writeup available on request.</p>
+          <p class="tech">Tech: Python, SQL, Tkinter/PySide6</p>
+          <div class="card-links">
+            <a href="#" onclick="return false;">Writeup (coming soon)</a>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section>
+      <h2>Skills</h2>
+      <p>Python, Java, SQL, C/C++/C#, JavaScript, PowerShell, R • Git/GitHub • Azure SQL</p>
+    </section>
+  </main>
+
+  <footer class="container footer">
+    <small>© <span id="year"></span> Mannie Hammond</small>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
