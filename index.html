@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- ✅ Canvas must be INSIDE body and ABOVE the script -->
+  <!-- Canvas must be INSIDE body and ABOVE the script -->
   <canvas id="fractal-bg" aria-hidden="true"></canvas>
 
   <header class="container">
@@ -69,7 +69,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
-  <!-- ✅ Keep your fractal script here (unchanged) -->
+  <!-- Keep your fractal script here (unchanged) -->
   <script>
     (() => {
       const canvas = document.getElementById("fractal-bg");
@@ -214,4 +214,6 @@
     })();
   </script>
 </body>
+<canvas id="fractal-bg" aria-hidden="true"></canvas>
+<div id="bg-overlay" aria-hidden="true"></div>
 </html>
