@@ -1,133 +1,165 @@
 :root { --max: 950px; }
 * { box-sizing: border-box; }
 
-/* Background layers */
+html, body { background: #000; }
+
+/* WebGL background */
 #fractal-bg{
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0;           /* canvas layer */
+  z-index: 0;
   pointer-events: none;
 }
 
+/* Optional global dimmer (keep light since we’re adding panels) */
 #bg-overlay{
   position: fixed;
   inset: 0;
-  z-index: 1;           /* overlay layer */
-  background: rgba(0,0,0,0.18); /* tweak this (0.12 - 0.30) */
+  z-index: 1;
+  background: rgba(0,0,0,0.10); /* tweak 0.06–0.16 */
   pointer-events: none;
 }
 
-/* Make sure content is above both background layers */
+/* Content above background */
 header, main, footer{
   position: relative;
   z-index: 2;
 }
+.about {
+  margin: 10px 0 0;
+  max-width: 80ch;
+  color: rgba(255, 255, 255, 0.801);
+}
 
-/* Base page styling */
-body {
+body{
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height: 1.5;
-  color: #f3f3f3; /* readable on dark background */
+  color: #f3f6ff;
 }
 
-.container {
+.container{
   max-width: var(--max);
   margin: 0 auto;
   padding: 24px;
 }
 
-h1 {
+/* ✅ translucent “panel” behind the words (like your link buttons) */
+header.container,
+main.container,
+footer.container{
+  background: rgba(17, 20, 24, 0.507);     /* grey glass */
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.671);
+}
+
+/* Give a little spacing so the panels don’t touch */
+header.container{ margin-top: 22px; }
+main.container{ margin-top: 16px; }
+footer.container{ margin-top: 16px; margin-bottom: 22px; }
+
+h1{
   margin: 0;
   font-size: 2.1rem;
   letter-spacing: 0.2px;
 }
 
-.subtitle {
+.subtitle{
   margin-top: 6px;
   opacity: 0.9;
-  color: rgba(255,255,255,0.85);
+  color: rgba(243,246,255,0.85);
 }
 
-/* Top links */
-.links {
+h2{
+  margin-top: 18px;
+  margin-bottom: 12px;
+}
+
+/* Buttons */
+.links{
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
 }
 
-.btn {
+.btn{
   display: inline-block;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
-  background: rgba(0,0,0,0.25);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.45);
   transition: transform 120ms ease, background 120ms ease;
 }
-
-.btn:hover {
+.btn:hover{
   transform: translateY(-1px);
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.48);
 }
 
-h2 {
-  margin-top: 28px;
-  margin-bottom: 12px;
-}
-
-/* Project cards grid */
-.grid {
+/* Projects grid */
+.grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
 }
 
-/* Cards */
-.card {
-  background: rgba(255,255,255,0.92);
-  color: #111;
-  backdrop-filter: blur(6px);
 
-  border: 1px solid rgba(255,255,255,0.55);
+
+.card{
+  background: rgba(12, 14, 18, 0.63);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 2px 14px rgba(0,0,0,0.18);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+
+  color: rgba(255,255,255,0.92);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
-.card h3 {
+.card p { color: rgba(255,255,255,0.82); }
+.tech { color: rgba(255,255,255,0.72); }
+
+.card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.card h3{
   margin-top: 0;
+  margin-bottom: 8px;
+  color: #ffffff;
 }
 
-.tech {
-  opacity: 0.8;
+.tech{
+  opacity: 0.85;
   font-size: 0.95rem;
 }
 
-.card-links a {
+.card-links a{
   margin-right: 12px;
   text-decoration: none;
+  color: rgba(190, 220, 255, 0.95);
+}
+.card-links a:hover{
+  text-decoration: underline;
 }
 
-/* Footer */
-.footer {
-  opacity: 0.75;
-  margin-top: 28px;
+.footer{
+  opacity: 0.8;
 }
 
-/* Small screens tweaks */
-@media (max-width: 420px) {
-  h1 { font-size: 1.7rem; }
-  .container { padding: 18px; }
+@media (max-width: 420px){
+  h1{ font-size: 1.7rem; }
+  .container{ padding: 18px; }
 }
 
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .btn { transition: none; }
-  .btn:hover { transform: none; }
+@media (prefers-reduced-motion: reduce){
+  .btn{ transition: none; }
+  .btn:hover{ transform: none; }
 }
