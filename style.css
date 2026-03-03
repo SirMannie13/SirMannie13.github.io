@@ -15,59 +15,119 @@
   position: fixed;
   inset: 0;
   z-index: 1;           /* overlay layer */
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.18); /* tweak this (0.12 - 0.30) */
   pointer-events: none;
 }
 
-/* Make sure your content is above both */
+/* Make sure content is above both background layers */
 header, main, footer{
   position: relative;
   z-index: 2;
 }
 
-/* Slightly dark overlay for readability */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-}
-
+/* Base page styling */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height: 1.5;
+  color: #f3f3f3; /* readable on dark background */
 }
 
-.container { max-width: var(--max); margin: 0 auto; padding: 24px; }
-.subtitle { margin-top: 6px; opacity: 0.8; }
+.container {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 24px;
+}
 
-.links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+h1 {
+  margin: 0;
+  font-size: 2.1rem;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  margin-top: 6px;
+  opacity: 0.9;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Top links */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .btn {
   display: inline-block;
   padding: 10px 14px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+  transition: transform 120ms ease, background 120ms ease;
 }
 
-h2 { margin-top: 28px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.btn:hover {
+  transform: translateY(-1px);
+  background: rgba(0,0,0,0.35);
+}
 
+h2 {
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+/* Project cards grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+/* Cards */
 .card {
   background: rgba(255,255,255,0.92);
+  color: #111;
   backdrop-filter: blur(6px);
 
-  border: 1px solid #eee;
+  border: 1px solid rgba(255,255,255,0.55);
   border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.18);
 }
 
-.tech { opacity: 0.8; font-size: 0.95rem; }
-.card-links a { margin-right: 12px; text-decoration: none; }
+.card h3 {
+  margin-top: 0;
+}
 
-.footer { opacity: 0.7; margin-top: 28px; }
+.tech {
+  opacity: 0.8;
+  font-size: 0.95rem;
+}
+
+.card-links a {
+  margin-right: 12px;
+  text-decoration: none;
+}
+
+/* Footer */
+.footer {
+  opacity: 0.75;
+  margin-top: 28px;
+}
+
+/* Small screens tweaks */
+@media (max-width: 420px) {
+  h1 { font-size: 1.7rem; }
+  .container { padding: 18px; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+  .btn:hover { transform: none; }
+}
