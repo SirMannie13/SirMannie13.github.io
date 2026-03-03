@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Canvas must be INSIDE body and ABOVE the script -->
   <canvas id="fractal-bg" aria-hidden="true"></canvas>
+  <div id="bg-overlay" aria-hidden="true"></div>
 
   <header class="container">
     <h1>James “Mannie” Hammond</h1>
@@ -152,7 +152,7 @@
           float r = length(p);
           float vign = smoothstep(1.4, 0.3, r);
           col *= vign;
-          col *= 0.55;
+          col *= 0.9;
 
           gl_FragColor = vec4(col, 1.0);
         }
@@ -214,6 +214,4 @@
     })();
   </script>
 </body>
-<canvas id="fractal-bg" aria-hidden="true"></canvas>
-<div id="bg-overlay" aria-hidden="true"></div>
 </html>
