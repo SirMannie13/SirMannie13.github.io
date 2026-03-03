@@ -7,14 +7,17 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- ✅ Canvas must be INSIDE body and ABOVE the script -->
+  <canvas id="fractal-bg" aria-hidden="true"></canvas>
+
   <header class="container">
     <h1>James “Mannie” Hammond</h1>
     <p class="subtitle">Software Engineer • Python • SQL • Desktop Apps</p>
 
     <div class="links">
-      <a class="btn" href="https://github.com/SirMannie13" target="_blank" rel="noreferrer">GitHub</a>
-      <a class="btn" href="https://www.linkedin.com/in/james-hammond-00774b24a/" target="_blank" rel="noreferrer">LinkedIn</a>
-      <a class="btn" href="MannieResume.pdf" target="_blank" rel="noreferrer">Resume</a>
+      <a class="btn" href="https://github.com/SirMannie13" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a class="btn" href="https://www.linkedin.com/in/james-hammond-00774b24a/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a class="btn" href="MannieResume.pdf" target="_blank" rel="noopener noreferrer">Resume</a>
       <a class="btn" href="mailto:j.manniehammond@hotmail.com">Email</a>
     </div>
   </header>
@@ -23,13 +26,12 @@
     <section>
       <h2>Projects</h2>
       <div class="grid">
-
         <article class="card">
           <h3>Project Tracker</h3>
           <p>R Shiny + Excel app to track and report project status.</p>
           <p class="tech">Tech: R, Shiny, HTML, Excel</p>
           <div class="card-links">
-            <a href="https://github.com/SirMannie13/Project_Tracker" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://github.com/SirMannie13/Project_Tracker" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </article>
 
@@ -38,7 +40,7 @@
           <p>Trip planning app with a landing page and supporting tools.</p>
           <p class="tech">Tech: (fill in)</p>
           <div class="card-links">
-            <a href="https://github.com/SirMannie13/trip_planner" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://github.com/SirMannie13/trip_planner" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </article>
 
@@ -47,10 +49,9 @@
           <p>Desktop monitoring tool. Code private; screenshots/writeup available on request.</p>
           <p class="tech">Tech: Python, SQL, Tkinter/PySide6</p>
           <div class="card-links">
-            <a href="#" onclick="return false;">Writeup (coming soon)</a>
+            <span>Writeup (coming soon)</span>
           </div>
         </article>
-
       </div>
     </section>
 
@@ -67,185 +68,150 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
+
+  <!-- ✅ Keep your fractal script here (unchanged) -->
   <script>
-(() => {
-  const canvas = document.getElementById("fractal-bg");
-  const gl =
-    canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: false }) ||
-    canvas.getContext("experimental-webgl");
+    (() => {
+      const canvas = document.getElementById("fractal-bg");
+      const gl =
+        canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: false }) ||
+        canvas.getContext("experimental-webgl");
 
-  // If WebGL isn't available, just bail (you can add a 2D fallback later if you want).
-  if (!gl) {
-    console.warn("WebGL not supported; fractal background disabled.");
-    canvas.remove();
-    return;
-  }
-
-  // Respect reduced motion preference
-  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-
-  // Fullscreen resize (handle HiDPI)
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
-    gl.viewport(0, 0, canvas.width, canvas.height);
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  const vertSrc = `
-    attribute vec2 a_pos;
-    varying vec2 v_uv;
-    void main() {
-      v_uv = a_pos * 0.5 + 0.5;
-      gl_Position = vec4(a_pos, 0.0, 1.0);
-    }
-  `;
-
-  // Oscillating Julia fractal (parameter c moves in a loop)
-  const fragSrc = `
-    precision highp float;
-    varying vec2 v_uv;
-    uniform vec2 u_res;
-    uniform float u_time;
-
-    // Quick palette
-    vec3 palette(float t) {
-      // Smooth cosine palette
-      vec3 a = vec3(0.5, 0.5, 0.5);
-      vec3 b = vec3(0.5, 0.5, 0.5);
-      vec3 c = vec3(1.0, 1.0, 1.0);
-      vec3 d = vec3(0.00, 0.10, 0.20);
-      return a + b * cos(6.28318 * (c * t + d));
-    }
-
-    void main() {
-      // Map uv -> centered coords, keep aspect ratio
-      vec2 p = (v_uv - 0.5) * 2.0;
-      p.x *= u_res.x / u_res.y;
-
-      // Animate parameter 'c' to oscillate the Julia set
-      float t = u_time * 0.35;
-      vec2 cplx = vec2(0.32 * cos(t) - 0.15 * sin(t * 1.7),
-                       0.32 * sin(t) + 0.15 * cos(t * 1.3));
-
-      // Zoom / drift for extra motion
-      float zoom = 1.25 + 0.10 * sin(u_time * 0.25);
-      vec2 z = p / zoom + vec2(0.05 * sin(u_time * 0.12), 0.03 * cos(u_time * 0.10));
-
-      // Iterate z = z^2 + c
-      const int MAX_IT = 150;
-      float iter = 0.0;
-      float m2 = 0.0;
-
-      for (int i = 0; i < MAX_IT; i++) {
-        // z^2
-        vec2 z2 = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y);
-        z = z2 + cplx;
-
-        m2 = dot(z, z);
-        if (m2 > 16.0) {
-          iter = float(i);
-          break;
-        }
-        // If we never break, iter stays 0. We'll handle that below.
-      }
-
-      // Smooth coloring
-      float it = iter;
-      if (it > 0.0) {
-        it = it - log2(log2(m2)) + 4.0;
-      }
-
-      float norm = it / float(MAX_IT);
-
-      // Interior color (if didn't escape)
-      if (iter == 0.0) {
-        gl_FragColor = vec4(0.02, 0.02, 0.03, 1.0);
+      if (!gl) {
+        console.warn("WebGL not supported; fractal background disabled.");
+        canvas.remove();
         return;
       }
 
-      vec3 col = palette(norm);
-      // Vignette for a nicer “background” feel
-      float r = length(p);
-      float vign = smoothstep(1.4, 0.3, r);
-      col *= vign;
+      const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-      // Darken a bit so text stays readable
-      col *= 0.55;
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      window.addEventListener("resize", resize);
+      resize();
 
-      gl_FragColor = vec4(col, 1.0);
-    }
-  `;
+      const vertSrc = `
+        attribute vec2 a_pos;
+        varying vec2 v_uv;
+        void main() {
+          v_uv = a_pos * 0.5 + 0.5;
+          gl_Position = vec4(a_pos, 0.0, 1.0);
+        }
+      `;
 
-  function compile(type, src) {
-    const sh = gl.createShader(type);
-    gl.shaderSource(sh, src);
-    gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      const err = gl.getShaderInfoLog(sh);
-      gl.deleteShader(sh);
-      throw new Error(err);
-    }
-    return sh;
-  }
+      const fragSrc = `
+        precision highp float;
+        varying vec2 v_uv;
+        uniform vec2 u_res;
+        uniform float u_time;
 
-  function createProgram(vsSrc, fsSrc) {
-    const vs = compile(gl.VERTEX_SHADER, vsSrc);
-    const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
-    const prog = gl.createProgram();
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      const err = gl.getProgramInfoLog(prog);
-      gl.deleteProgram(prog);
-      throw new Error(err);
-    }
-    return prog;
-  }
+        vec3 palette(float t) {
+          vec3 a = vec3(0.5, 0.5, 0.5);
+          vec3 b = vec3(0.5, 0.5, 0.5);
+          vec3 c = vec3(1.0, 1.0, 1.0);
+          vec3 d = vec3(0.00, 0.10, 0.20);
+          return a + b * cos(6.28318 * (c * t + d));
+        }
 
-  const program = createProgram(vertSrc, fragSrc);
-  gl.useProgram(program);
+        void main() {
+          vec2 p = (v_uv - 0.5) * 2.0;
+          p.x *= u_res.x / u_res.y;
 
-  // Fullscreen quad
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([
-      -1, -1,
-       1, -1,
-      -1,  1,
-      -1,  1,
-       1, -1,
-       1,  1
-    ]),
-    gl.STATIC_DRAW
-  );
+          float t = u_time * 0.35;
+          vec2 cplx = vec2(0.32 * cos(t) - 0.15 * sin(t * 1.7),
+                           0.32 * sin(t) + 0.15 * cos(t * 1.3));
 
-  const aPos = gl.getAttribLocation(program, "a_pos");
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+          float zoom = 1.25 + 0.10 * sin(u_time * 0.25);
+          vec2 z = p / zoom + vec2(0.05 * sin(u_time * 0.12), 0.03 * cos(u_time * 0.10));
 
-  const uRes = gl.getUniformLocation(program, "u_res");
-  const uTime = gl.getUniformLocation(program, "u_time");
+          const int MAX_IT = 150;
+          float iter = 0.0;
+          float m2 = 0.0;
 
-  let start = performance.now();
-  function frame(now) {
-    const timeSec = prefersReducedMotion ? 0.0 : (now - start) / 1000.0;
-    gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform1f(uTime, timeSec);
+          for (int i = 0; i < MAX_IT; i++) {
+            vec2 z2 = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y);
+            z = z2 + cplx;
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
-</script>
+            m2 = dot(z, z);
+            if (m2 > 16.0) { iter = float(i); break; }
+          }
+
+          float it = iter;
+          if (it > 0.0) { it = it - log2(log2(m2)) + 4.0; }
+          float norm = it / float(MAX_IT);
+
+          if (iter == 0.0) { gl_FragColor = vec4(0.02, 0.02, 0.03, 1.0); return; }
+
+          vec3 col = palette(norm);
+          float r = length(p);
+          float vign = smoothstep(1.4, 0.3, r);
+          col *= vign;
+          col *= 0.55;
+
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `;
+
+      function compile(type, src) {
+        const sh = gl.createShader(type);
+        gl.shaderSource(sh, src);
+        gl.compileShader(sh);
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+          const err = gl.getShaderInfoLog(sh);
+          gl.deleteShader(sh);
+          throw new Error(err);
+        }
+        return sh;
+      }
+
+      function createProgram(vsSrc, fsSrc) {
+        const vs = compile(gl.VERTEX_SHADER, vsSrc);
+        const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+          const err = gl.getProgramInfoLog(prog);
+          gl.deleteProgram(prog);
+          throw new Error(err);
+        }
+        return prog;
+      }
+
+      const program = createProgram(vertSrc, fragSrc);
+      gl.useProgram(program);
+
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,  1, -1, -1,  1,
+        -1,  1,  1, -1,  1,  1
+      ]), gl.STATIC_DRAW);
+
+      const aPos = gl.getAttribLocation(program, "a_pos");
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      const uRes = gl.getUniformLocation(program, "u_res");
+      const uTime = gl.getUniformLocation(program, "u_time");
+
+      const start = performance.now();
+      function frame(now) {
+        const timeSec = prefersReducedMotion ? 0.0 : (now - start) / 1000.0;
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform1f(uTime, timeSec);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
+  </script>
 </body>
-<canvas id="fractal-bg" aria-hidden="true"></canvas>
 </html>
