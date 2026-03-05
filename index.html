@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mannie Hammond | Software Engineer</title>
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <canvas id="fractal-bg" aria-hidden="true"></canvas>
@@ -16,6 +16,7 @@
     <p class="about">
       I build automation and desktop tools in Python/SQL. Interested in software engineering roles.
     </p>
+
     <div class="links">
       <a class="btn" href="https://github.com/SirMannie13" target="_blank" rel="noopener noreferrer">GitHub</a>
       <a class="btn" href="https://www.linkedin.com/in/james-hammond-00774b24a/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
@@ -28,6 +29,17 @@
     <section>
       <h2>Projects</h2>
       <div class="grid">
+
+        <article class="card">
+          <h3>LogLens (Desktop Log Analyzer)</h3>
+          <p>PySide6 + SQLite tool to parse logs, filter/search entries, export CSV, and inspect full raw lines.</p>
+          <p class="tech">Tech: Python, PySide6, SQLite</p>
+          <div class="card-links">
+            <a href="https://github.com/SirMannie13/loglens" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="loglens.html">Case Study</a>
+          </div>
+        </article>
+
         <article class="card">
           <h3>Project Tracker</h3>
           <p>R Shiny + Excel app to track and report project status.</p>
@@ -47,16 +59,6 @@
         </article>
 
         <article class="card">
-          <h3>LogLens (Desktop Log Analyzer)</h3>
-          <p>PySide6 + SQLite tool to parse logs, filter/search entries, export CSV, and inspect full raw lines.</p>
-          <p class="tech">Tech: Python, PySide6, SQLite</p>
-          <div class="card-links">
-            <a href="https://github.com/SirMannie13/loglens" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="loglens.html">Case Study</a>
-          </div>
-        </article>
-
-        <article class="card">
           <h3>Patron Monitor (Internal / Proprietary)</h3>
           <p>Desktop monitoring tool. Code private; screenshots/writeup available on request.</p>
           <p class="tech">Tech: Python, SQL, Tkinter/PySide6</p>
@@ -64,6 +66,7 @@
             <span>Writeup (coming soon)</span>
           </div>
         </article>
+
       </div>
     </section>
 
@@ -81,186 +84,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
-  <!-- Keep your fractal script here (unchanged) -->
-  <script>
-  (() => {
-    const canvas = document.getElementById("fractal-bg");
-    const gl =
-      canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: false }) ||
-      canvas.getContext("experimental-webgl");
-
-    if (!gl) {
-      console.warn("WebGL not supported; background disabled.");
-      canvas.remove();
-      return;
-    }
-
-    const start = performance.now(); // ✅ you were missing this
-
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1); // cap DPR at 1
-      const scale = 0.75; // 0.65 faster, 0.85 sharper
-      canvas.width = Math.floor(window.innerWidth * dpr * scale);
-      canvas.height = Math.floor(window.innerHeight * dpr * scale);
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-    window.addEventListener("resize", resize);
-    resize();
-
-    const vertSrc = `
-      attribute vec2 a_pos;
-      varying vec2 v_uv;
-      void main() {
-        v_uv = a_pos * 0.5 + 0.5;   // ✅ use 0.5, not 0.4
-        gl_Position = vec4(a_pos, 0.0, 1.0);
-      }
-    `;
-
-    const fragSrc = `
-      precision highp float;
-
-      varying vec2 v_uv;
-      uniform vec2 u_res;
-      uniform float u_time;
-      uniform float u_quality;  // ✅ uniforms must be global (NOT inside main)
-
-      vec3 palette(float t) {
-        // t can be any float; we'll wrap it to 0..1
-        float x = fract(t);
-
-        vec3 blue   = vec3(0.10, 0.45, 1.00);
-        vec3 green  = vec3(0.10, 0.95, 0.55);
-        vec3 yellow = vec3(1.00, 0.95, 0.20);
-
-        // 3-stop gradient: blue -> green -> yellow -> blue
-        vec3 c1 = mix(blue,  green,  smoothstep(0.0, 1.0, x * 3.0));
-        vec3 c2 = mix(green, yellow, smoothstep(0.0, 1.0, (x - 1.0/3.0) * 3.0));
-        vec3 c3 = mix(yellow, blue,  smoothstep(0.0, 1.0, (x - 2.0/3.0) * 3.0));
-
-        // Pick the right segment
-        return (x < 1.0/3.0) ? c1 : (x < 2.0/3.0) ? c2 : c3;
-      }
-
-      vec2 clifford(vec2 p, float a, float b, float c, float d) {
-        return vec2(
-          sin(a * p.y) + c * cos(a * p.x),
-          sin(b * p.x) + d * cos(b * p.y)
-        );
-      }
-
-      void main() {
-        vec2 uv = (v_uv - 0.5) * 2.0;
-        uv.x *= u_res.x / u_res.y;
-
-        vec2 p = uv * 1.15;
-
-        float tt = u_time * 0.18;
-        float a = 1.60 + 0.20 * sin(tt * 0.9);
-        float b = 1.80 + 0.20 * cos(tt * 0.7);
-        float c = 0.90 + 0.15 * sin(tt * 1.3);
-        float d = 0.70 + 0.15 * cos(tt * 1.1);
-
-        float glow = 0.0;
-        float trap = 1e9;
-
-        const int ITERS_MAX = 4;
-        int iters = int(mix(28.0, float(ITERS_MAX), clamp(u_quality, 0.0, 1.0)));
-
-        for (int i = 0; i < ITERS_MAX; i++) {
-          if (i >= iters) break;
-          p = clifford(p, a, b, c, d);
-
-          float dTrap = min(abs(p.x), abs(p.y));
-          trap = min(trap, dTrap);
-
-          glow += exp(-1.25 * dot(p, p));
-        }
-
-        float lines = exp(-12.0 * trap);
-        float dens  = glow / float(iters);
-
-        float hue = u_time * 0.0;
-        vec3 col = palette(hue + dens * 0.9);
-
-        col *= (0.25 + 1.20 * dens);
-        col += col * (1.35 * lines);
-
-        float v = smoothstep(1.8, 0.25, length(uv));
-        col *= (0.55 + 0.45 * v);
-
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `;
-
-    function compile(type, src) {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        const err = gl.getShaderInfoLog(sh);
-        gl.deleteShader(sh);
-        throw new Error(err);
-      }
-      return sh;
-    }
-
-    function createProgram(vsSrc, fsSrc) {
-      const vs = compile(gl.VERTEX_SHADER, vsSrc);
-      const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
-      const prog = gl.createProgram();
-      gl.attachShader(prog, vs);
-      gl.attachShader(prog, fs);
-      gl.Program(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-        const err = gl.getProgramInfoLog(prog);
-        gl.deleteProgram(prog);
-        throw new Error(err);
-      }
-      return prog;
-    }
-
-    const program = createProgram(vertSrc, fragSrc);
-    gl.useProgram(program);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([-1,-1,  1,-1, -1, 1,  -1, 1,  1,-1,  1, 1]),
-      gl.STATIC_DRAW
-    );
-
-    const aPos = gl.getAttribLocation(program, "a_pos");
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-    const uRes = gl.getUniformLocation(program, "u_res");
-    const uTime = gl.getUniformLocation(program, "u_time");
-    const uQuality = gl.getUniformLocation(program, "u_quality");
-
-    let last = performance.now();
-    let q = 1.0;
-
-    function frame(now) {
-      const dt = now - last;
-      last = now;
-
-      const fps = 1000 / Math.max(dt, 1);
-      if (fps < 45) q = Math.max(0.0, q - 0.03);
-      else if (fps > 58) q = Math.min(1.0, q + 0.02);
-
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, (now - start) / 1000.0);
-      if (uQuality) gl.uniform1f(uQuality, q);
-
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-      requestAnimationFrame(frame);
-    }
-
-    requestAnimationFrame(frame);
-  })();
-  </script>
+  <!-- Background script -->
+  <script src="bg.js?v=1"></script>
 </body>
 </html>
