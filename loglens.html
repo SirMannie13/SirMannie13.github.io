@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LogLens — Case Study</title>
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <canvas id="fractal-bg" aria-hidden="true"></canvas>
@@ -20,8 +20,8 @@
     </div>
 
     <p class="about">
-      LogLens is a lightweight desktop tool that ingests log files into a local SQLite database for fast filtering, searching,
-      and exporting. Built to resemble real internal tooling workflows without using proprietary data.
+      LogLens is a lightweight desktop tool that ingests log files into a local SQLite database for fast filtering,
+      searching, and exporting.
     </p>
   </header>
 
@@ -38,27 +38,12 @@
     </section>
 
     <section>
-      <h2>Screenshot</h2>
-      <p>Add a screenshot from your LogLens repo here (save it as <code>assets/loglens.png</code> in your portfolio repo).</p>
-      <img src="assets/loglens.png" alt="LogLens screenshot" style="width:100%; max-width: 980px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14);" />
-    </section>
-
-    <section>
-      <h2>Architecture</h2>
+      <h2>What it demonstrates</h2>
       <ul>
-        <li><strong>Parser:</strong> normalizes lines into structured fields (timestamp, level, source, message, raw).</li>
-        <li><strong>Storage:</strong> SQLite table for fast filtering and exporting.</li>
-        <li><strong>UI:</strong> PySide6 table model + debounced filters.</li>
-        <li><strong>Async ingest:</strong> parsing runs in a worker so the UI stays responsive.</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>What I’d Add Next</h2>
-      <ul>
-        <li>Charts (errors over time, top sources).</li>
-        <li>Saved filters / searches.</li>
-        <li>Rule-based highlighting and “incident bundle” export.</li>
+        <li>UI development with Qt (PySide6)</li>
+        <li>Parsing + normalization of unstructured data</li>
+        <li>Local database usage (SQLite) for fast filtering</li>
+        <li>Usability touches: debounced filters, export, raw-line inspection</li>
       </ul>
     </section>
   </main>
@@ -71,7 +56,6 @@
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
-  <!-- Use the same fractal background script as your main page -->
   <script src="bg.js?v=1"></script>
 </body>
 </html>
