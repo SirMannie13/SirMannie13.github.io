@@ -76,7 +76,7 @@
       float glow = 0.0;
       float trap = 1e9;
 
-      const int ITERS = 44;
+      const int ITERS = 4;
       for (int i = 0; i < ITERS; i++) {
         p = clifford(p, a, b, c, d);
         float dTrap = min(abs(p.x), abs(p.y));
