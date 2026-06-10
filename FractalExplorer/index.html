@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fractal Cycler</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0b0b0b; color:#eaeaea; }
+    .app { display: grid; grid-template-columns: 1fr 320px; height: 100vh; }
+    canvas { width: 100%; height: 100%; display:block; background:#111; }
+    .panel { border-left: 1px solid #222; padding: 14px; overflow:auto; }
+    .row { display:flex; gap:10px; align-items:center; }
+    label { font-size: 12px; opacity: .9; display:block; margin: 10px 0 6px; }
+    select, input, button { width: 100%; box-sizing: border-box; }
+    select, input { padding: 8px; border-radius: 10px; border: 1px solid #2a2a2a; background:#141414; color:#eaeaea; }
+    input[type="range"] { padding: 0; }
+    button { padding: 10px; border-radius: 12px; border: 1px solid #2a2a2a; background:#1a1a1a; color:#eaeaea; cursor:pointer; }
+    button:hover { background:#222; }
+    .small { font-size: 12px; opacity: .8; line-height: 1.35; }
+    .two { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; opacity:.9; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <canvas id="cv"></canvas>
+
+    <div class="panel">
+      <div class="row two">
+        <button id="prev">◀ Prev</button>
+        <button id="next">Next ▶</button>
+      </div>
+
+      <label>Fractal</label>
+      <select id="kind">
+        <option>Mandelbrot</option>
+        <option>Julia</option>
+        <option>Burning Ship</option>
+        <option>Tricorn</option>
+      </select>
+
+      <label>Color</label>
+      <select id="scheme">
+        <option>Fire</option>
+        <option>Gray</option>
+      </select>
+
+      <label>Max iterations: <span id="itersVal" class="mono"></span></label>
+      <input id="iters" type="range" min="1" max="250" step="1" value="150" />
+
+      <label>Zoom: <span id="zoomVal" class="mono"></span></label>
+      <input id="zoom" type="range" min="0.2" max="2000" step="0.2" value="1" />
+
+      <div class="two">
+        <div>
+          <label>Center X</label>
+          <input id="cx" type="number" step="0.000001" value="-0.5" />
+        </div>
+        <div>
+          <label>Center Y</label>
+          <input id="cy" type="number" step="0.000001" value="0" />
+        </div>
+      </div>
+
+      <div class="two">
+        <div>
+          <label>Julia Re(c)</label>
+          <input id="jre" type="number" step="0.000001" value="0.285" />
+        </div>
+        <div>
+          <label>Julia Im(c)</label>
+          <input id="jim" type="number" step="0.000001" value="0.01" />
+        </div>
+      </div>
+
+      <label>Render scale (speed vs detail)</label>
+      <select id="scale">
+        <option value="1">1.0 (best)</option>
+        <option value="0.75">0.75</option>
+        <option value="0.5" selected>0.5 (fast)</option>
+        <option value="0.35">0.35 (faster)</option>
+      </select>
+
+      <div class="row two" style="margin-top:12px;">
+        <button id="reset">Reset</button>
+        <button id="rerender">Render</button>
+      </div>
+
+      <p class="small" style="margin-top:12px;">
+        Mouse: <b>drag</b> to pan, <b>wheel</b> to zoom.<br/>
+        Tip: bump iterations when zooming in.
+      </p>
+
+      <div class="small">
+        <div>Preset: <span id="presetName" class="mono"></span></div>
+        <div>Status: <span id="status" class="mono"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("cv");
+    const ctx = canvas.getContext("2d", { alpha: false });
+
+    const back = document.createElement("canvas");
+    const backCtx = back.getContext("2d", { alpha: false });
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    
+    let displayW = 0;
+    let displayH = 0;
+    
+    // Smoother scaling when rendering at low scale (optional)
+    ctx.imageSmoothingEnabled = true;
+    backCtx.imageSmoothingEnabled = true;
+
+    const el = (id) => document.getElementById(id);
+    const kind = el("kind");
+    const scheme = el("scheme");
+    const iters = el("iters");
+    const itersVal = el("itersVal");
+    const zoom = el("zoom");
+    const zoomVal = el("zoomVal");
+    const cx = el("cx");
+    const cy = el("cy");
+    const jre = el("jre");
+    const jim = el("jim");
+    const scaleSel = el("scale");
+    const status = el("status");
+    const presetName = el("presetName");
+
+    const presets = [
+      { name:"Mandelbrot (default)", kind:"Mandelbrot", cx:-0.5, cy:0.0, zoom:1.0, iters:250 },
+      { name:"Mandelbrot (seahorse)", kind:"Mandelbrot", cx:-0.7453, cy:0.1127, zoom:150.0, iters:500 },
+      { name:"Mandelbrot (elephant)", kind:"Mandelbrot", cx:0.285, cy:0.01, zoom:120.0, iters:500 },
+      { name:"Burning Ship", kind:"Burning Ship", cx:-1.75, cy:-0.03, zoom:60.0, iters:450 },
+      { name:"Tricorn", kind:"Tricorn", cx:-0.05, cy:0.65, zoom:3.0, iters:300 },
+      { name:"Julia (0.285 + 0.01i)", kind:"Julia", cx:0.0, cy:0.0, zoom:1.2, iters:350, jre:0.285, jim:0.01 },
+      { name:"Julia (-0.8 + 0.156i)", kind:"Julia", cx:0.0, cy:0.0, zoom:1.2, iters:350, jre:-0.8, jim:0.156 },
+    ];
+    let presetIndex = 0;
+
+    // Web Worker
+    const worker = new Worker("./worker.js", { type: "module" });
+
+    // Render token so old frames get ignored
+    let token = 0;
+
+    // Debounce (keeps it feeling instant while sliding)
+    let debounceTimer = null;
+    function requestRenderDebounced(ms = 35) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(render, ms);
+    }
+
+    function setStatus(s) { status.textContent = s; }
+
+    function resizeCanvas() {
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas._dpr = dpr;
+        
+      const rect = canvas.getBoundingClientRect();
+      displayW = Math.max(2, Math.floor(rect.width * dpr));
+      displayH = Math.max(2, Math.floor(rect.height * dpr));
+        
+      // Only resize the visible canvas here (not every render)
+      canvas.width = displayW;
+      canvas.height = displayH;
+        
+      requestRenderDebounced(0);
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    function getState() {
+      return {
+        kind: kind.value,
+        scheme: scheme.value,
+        iters: Number(iters.value),
+        zoom: Number(zoom.value),
+        cx: Number(cx.value),
+        cy: Number(cy.value),
+        jre: Number(jre.value),
+        jim: Number(jim.value),
+        scale: Number(scaleSel.value),
+      };
+    }
+
+    function render() {
+      const s = getState();
+      itersVal.textContent = s.iters;
+      zoomVal.textContent = s.zoom.toFixed(2);
+
+      // Worker render resolution (can be smaller for speed)
+      const w = Math.max(2, Math.floor(displayW * s.scale));
+      const h = Math.max(2, Math.floor(displayH * s.scale));
+
+      token++;
+      const myToken = token;
+      setStatus("rendering…"); // don't clear the screen anymore
+
+      worker.postMessage({
+        token: myToken,
+        w, h,
+        kind: s.kind,
+        scheme: s.scheme,
+        iters: s.iters,
+        zoom: s.zoom,
+        cx: s.cx,
+        cy: s.cy,
+        jre: s.jre,
+        jim: s.jim,
+      });
+    }
+
+    worker.onmessage = (ev) => {
+      const { token: t, w, h, buffer, ms } = ev.data;
+      if (t !== token) return; // ignore old render
+
+      // Ensure back buffer matches worker output
+      if (back.width !== w || back.height !== h) {
+        back.width = w;
+        back.height = h;
+      }
+
+      const img = new ImageData(new Uint8ClampedArray(buffer), w, h);
+      backCtx.putImageData(img, 0, 0);
+
+      // Draw to visible canvas (full size), scaling up if needed
+      ctx.clearRect(0, 0, displayW, displayH);
+      ctx.drawImage(back, 0, 0, displayW, displayH);
+
+      setStatus(`done (${ms.toFixed(0)} ms)`);
+    };
+
+    // UI wiring
+    [kind, scheme, scaleSel].forEach(x => x.addEventListener("change", () => requestRenderDebounced()));
+    [iters, zoom].forEach(x => x.addEventListener("input", () => requestRenderDebounced()));
+    [cx, cy, jre, jim].forEach(x => x.addEventListener("input", () => requestRenderDebounced()));
+
+    el("rerender").addEventListener("click", render);
+    el("reset").addEventListener("click", () => {
+      kind.value = "Mandelbrot";
+      scheme.value = "Fire";
+      iters.value = "100";
+      zoom.value = "1";
+      cx.value = "-0.5";
+      cy.value = "0";
+      jre.value = "0.285";
+      jim.value = "0.01";
+      presetIndex = 0;
+      presetName.textContent = presets[presetIndex].name;
+      requestRenderDebounced(0);
+    });
+
+    function applyPreset(p) {
+      presetName.textContent = p.name;
+      kind.value = p.kind;
+        
+      iters.value = String(clamp(Number(p.iters ?? 50), 1, 100)); // <- clamps preset iters
+        
+      zoom.value = String(p.zoom ?? 1);
+      cx.value = String(p.cx ?? -0.5);
+      cy.value = String(p.cy ?? 0);
+      if (p.jre != null) jre.value = String(p.jre);
+      if (p.jim != null) jim.value = String(p.jim);
+        
+      requestRenderDebounced(0);
+    }
+
+    el("prev").addEventListener("click", () => {
+      presetIndex = (presetIndex - 1 + presets.length) % presets.length;
+      applyPreset(presets[presetIndex]);
+    });
+    el("next").addEventListener("click", () => {
+      presetIndex = (presetIndex + 1) % presets.length;
+      applyPreset(presets[presetIndex]);
+    });
+
+    // Mouse interactions: drag pan, wheel zoom (zoom around mouse)
+    let dragging = false;
+    let dragStart = null;
+
+    function screenToComplex(mx, my) {
+      // mx,my in CSS pixels relative to canvas rect
+      const s = getState();
+      const rect = canvas.getBoundingClientRect();
+      const aspect = rect.width / rect.height;
+      const spanX = 3.5 / s.zoom;
+      const spanY = spanX / aspect;
+      const x = s.cx + ((mx / rect.width) - 0.5) * spanX;
+      const y = s.cy + ((my / rect.height) - 0.5) * spanY;
+      return { x, y, spanX, spanY };
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      dragging = true;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const s = getState();
+      dragStart = { mx, my, cx: s.cx, cy: s.cy, zoom: s.zoom };
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dragging || !dragStart) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      const aspect = rect.width / rect.height;
+      const spanX = 3.5 / dragStart.zoom;
+      const spanY = spanX / aspect;
+
+      const dx = (mx - dragStart.mx) / rect.width * spanX;
+      const dy = (my - dragStart.my) / rect.height * spanY;
+
+      cx.value = String(dragStart.cx - dx);
+      cy.value = String(dragStart.cy - dy);
+      requestRenderDebounced();
+    });
+
+    canvas.addEventListener("pointerup", () => { dragging = false; dragStart = null; });
+    canvas.addEventListener("pointercancel", () => { dragging = false; dragStart = null; });
+
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      const before = screenToComplex(mx, my);
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+
+      // update zoom
+      const newZoom = Math.min(2000, Math.max(0.2, Number(zoom.value) * factor));
+      zoom.value = String(newZoom);
+
+      // keep the point under the mouse fixed (zoom around cursor)
+      const after = screenToComplex(mx, my);
+      const newCx = Number(cx.value) + (before.x - after.x);
+      const newCy = Number(cy.value) + (before.y - after.y);
+      cx.value = String(newCx);
+      cy.value = String(newCy);
+
+      requestRenderDebounced(0);
+    }, { passive: false });
+
+    // start
+    resizeCanvas();
+    applyPreset(presets[presetIndex]);
+  </script>
+</body>
+</html>
